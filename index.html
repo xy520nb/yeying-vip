@@ -1,0 +1,414 @@
+<html lang="zh-CN">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <title>夜影导航页</title> 
+  <style>
+  :root{
+    --pink:#F472B6;--violet:#8B5CF6;--cyan:#22D3EE;--gold:#FFD34D;--blue:#60A5FA;
+    --text:#F8FAFC;--text-dim:#CBD5E1;
+    --glass:rgba(255,255,255,0.08);
+    --glass-strong:rgba(255,255,255,0.16);
+    --stroke:rgba(255,255,255,0.18);
+    --shadow:0 30px 80px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,sans-serif;color:var(--text);}
+  body{
+    background:
+      radial-gradient(1200px 700px at 15% 10%, rgba(255,211,77,.18), transparent 55%),
+      radial-gradient(1200px 700px at 85% 20%, rgba(244,114,182,.24), transparent 55%),
+      radial-gradient(900px 700px at 50% 95%, rgba(34,211,238,.24), transparent 55%),
+      linear-gradient(180deg, #0A0718 0%, #110826 45%, #0D061F 100%);
+    overflow-x:hidden; position:relative;
+  }
+  #grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.32;
+    background-image:
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:40px 40px;
+    mask-image:radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  }
+  #dot-canvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+  main{position:relative;z-index:10;min-height:100vh;padding:22px 20px 32px;display:flex;align-items:flex-start;justify-content:center;}
+
+  .wrap{width:min(620px,95vw);}
+
+  .hero{text-align:center;margin:10px 0 18px;animation:heroIn .9s cubic-bezier(.22,1,.36,1) both;}
+  @keyframes heroIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+  .logo{
+    width:64px;height:64px;border-radius:20px;display:inline-grid;place-items:center;
+    background:linear-gradient(135deg,var(--gold),var(--pink) 40%,var(--violet) 70%,var(--cyan));
+    box-shadow:0 14px 34px rgba(139,92,246,.42), inset 0 1px 0 rgba(255,255,255,.32);
+    font-size:28px;font-weight:900;color:#fff;position:relative;overflow:hidden;margin-bottom:14px;
+  }
+  .logo::after{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,.42),transparent 40%);animation:spin 5s linear infinite;}
+  .logo span{position:relative;z-index:1;letter-spacing:1px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .title{
+    font-size:38px;font-weight:900;letter-spacing:4px;line-height:1.08;
+    background:linear-gradient(90deg,#FFD34D 0%, #F472B6 35%, #8B5CF6 65%, #22D3EE 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 6px 24px rgba(255,211,77,.2);
+  }
+  .sub{font-size:11.5px;color:var(--text-dim);letter-spacing:6px;margin-top:8px;opacity:.92;}
+
+  .card{
+    background:var(--glass);
+    backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid var(--stroke);
+    border-radius:30px;
+    box-shadow:var(--shadow);
+    padding:24px 22px 20px;
+    position:relative;overflow:hidden;
+    margin-bottom:14px;
+    animation:cardIn .8s cubic-bezier(.22,1,.36,1) both;
+  }
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);pointer-events:none;}
+  @keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+  .section{margin-bottom:18px;}
+  .section:last-child{margin-bottom:0;}
+  .section-title{
+    display:inline-flex;align-items:center;gap:8px;margin:2px 4px 12px;
+    padding:7px 14px;border-radius:14px;background:rgba(255,255,255,.09);border:1px solid var(--stroke);
+    font-size:13px;font-weight:800;letter-spacing:1.5px;
+  }
+  .section-title.pink{color:#FBCFE8;}
+  .section-title.cyan{color:#A5F3FC;}
+  .section-title.gold{color:#FDE68A;}
+  .section-title i{font-size:14px;}
+
+  .button-grid{display:grid;gap:11px;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+
+  .btn-float{
+    --x:50%;--y:50%;
+    position:relative;overflow:hidden;display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;
+    border-radius:20px;padding:11.5px 12px;min-height:58px;
+    border:1px solid var(--stroke);
+    transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s,border-color .25s;
+    cursor:pointer;user-select:none;
+  }
+  .btn-float::before{content:"";position:absolute;left:var(--x);top:var(--y);width:0;height:0;border-radius:50%;background:rgba(255,255,255,.22);transform:translate(-50%,-50%);transition:width .55s,height .55s;}
+  .btn-float:hover{transform:translateY(-2px) scale(1.01);border-color:rgba(255,255,255,.35);}
+  .btn-float:active{transform:translateY(0) scale(.99);}
+
+  .btn-pink{background:linear-gradient(135deg, rgba(244,114,182,.9), rgba(139,92,246,.92));box-shadow:0 11px 30px rgba(244,114,182,.3);}
+  .btn-cyan{background:linear-gradient(135deg, rgba(34,211,238,.88), rgba(110,168,254,.92));box-shadow:0 11px 30px rgba(34,211,238,.28);}
+  .btn-gold{background:linear-gradient(135deg, rgba(255,211,77,.92), rgba(249,115,22,.9));box-shadow:0 11px 30px rgba(255,211,77,.26);}
+
+  .btn-ico{width:36px;height:36px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:17px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 5px 12px rgba(0,0,0,.16);}
+  .btn-text{display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1;}
+  .btn-title{font-size:14px;font-weight:800;letter-spacing:1.1px;line-height:1.25;}
+  .btn-sub{font-size:10px;color:rgba(255,255,255,.82);letter-spacing:.6px;opacity:.92;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .divider{height:1px;margin:20px 0 14px;background:linear-gradient(90deg,transparent,var(--stroke),transparent);}
+
+  .footer{text-align:center;margin-top:2px;}
+  .line{display:block;margin:5px 0;font-size:11.5px;color:rgba(203,213,225,.72);text-decoration:none;transition:all .25s;letter-spacing:.5px;}
+  .line:hover{color:#fff;}
+  .line .hl{background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;}
+  .line .hl-gold{background:linear-gradient(90deg,var(--gold),#F59E0B);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;}
+
+  .toast{position:fixed;left:50%;top:30px;transform:translate(-50%,-20px);
+    padding:10px 18px;border-radius:13px;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);
+    color:#fff;font-size:13px;z-index:9999;opacity:0;pointer-events:none;
+    transition:all .3s ease;border:1px solid var(--stroke);font-weight:600;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:560px){
+    main{padding:20px 14px 28px;}
+    .wrap{width:95vw;}
+    .hero{margin:10px 0 18px;}
+    .logo{width:54px;height:54px;border-radius:17px;font-size:24px;margin-bottom:11px;box-shadow:0 12px 28px rgba(139,92,246,.42);}
+    .title{font-size:32px;letter-spacing:3px;}
+    .sub{font-size:10.5px;letter-spacing:4px;margin-top:7px;}
+    .card{padding:21px 17px 17px;border-radius:26px;margin-bottom:12px;}
+    .section{margin-bottom:16px;}
+    .section-title{font-size:12.5px;letter-spacing:1.2px;padding:6.5px 12px;border-radius:12px;margin-bottom:10px;gap:7px;}
+    .section-title i{font-size:13px;}
+    .grid-2{grid-template-columns:1fr 1fr;}
+    .grid-3{grid-template-columns:1fr 1fr;}
+    .button-grid{gap:9px;}
+    .btn-float{padding:10.5px 11px;min-height:54px;border-radius:18px;gap:9px;}
+    .btn-pink{box-shadow:0 9px 24px rgba(244,114,182,.28);}
+    .btn-cyan{box-shadow:0 9px 24px rgba(34,211,238,.26);}
+    .btn-gold{box-shadow:0 9px 24px rgba(255,211,77,.24);}
+    .btn-ico{width:34px;height:34px;border-radius:11px;font-size:16px;}
+    .btn-title{font-size:13px;letter-spacing:1px;}
+    .btn-sub{font-size:10px;}
+    .divider{margin:17px 0 13px;}
+    .line{font-size:11px;}
+  }
+
+  @media (max-width:360px){
+    .title{font-size:27px;letter-spacing:2.5px;}
+    .logo{width:48px;height:48px;font-size:21px;border-radius:15px;margin-bottom:10px;}
+    .card{padding:18px 14px 14px;}
+    .grid-3{grid-template-columns:1fr;}
+    .btn-float{min-height:52px;}
+  }
+
+  @media (max-height:720px) and (orientation:landscape){
+    main{padding:18px 14px 26px;}
+    .hero{margin:8px 0 16px;}
+    .logo{width:50px;height:50px;border-radius:16px;font-size:22px;margin-bottom:9px;}
+    .title{font-size:30px;}
+    .card{padding:18px 20px 15px;border-radius:26px;margin-bottom:12px;}
+  }
+</style> 
+  <script src="js/jq.js"></script> 
+  <style>.btn-float::before{width:420px;height:420px}</style> 
+ </head> 
+ <body id="v1"> 
+  <div id="grid"></div> 
+  <canvas id="dot-canvas" width="1080" height="2106" style="width: 360px; height: 702px;"></canvas> 
+  <main id="v2"> 
+   <div id="v3" class="wrap"> 
+    <div id="v4" class="hero"> 
+     <div id="v5" class="logo"> 
+      <span id="v6">影</span> 
+     </div> 
+     <div id="v7" class="title">
+       夜影官网 
+     </div> 
+     <div id="v8" class="sub">
+       YE · YING· FA·KA 
+     </div> 
+    </div> 
+    <div id="v9" class="card"> 
+     <div id="v10" class="section"> 
+      <div id="v11" class="section-title pink"> 
+       <span id="v12">🛒</span> 专属下单区 
+      </div> 
+      <div id="v13" class="button-grid grid-2"> 
+       <a class="btn-float btn-pink" id="btn-order1" href="https://ys.42bb.cn/shop/YYNB" target="_blank" rel="noopener" style="--x: 53px; --y: 32.17707824707031px;"> 
+        <div id="v14" class="btn-ico">
+          🛍️ 
+        </div> 
+        <div id="v15" class="btn-text"> 
+         <div id="v16" class="btn-title">
+           下 单 1 
+         </div> 
+         <div id="v17" class="btn-sub">
+           稳定项目 
+         </div> 
+        </div> </a> 
+       <a class="btn-float btn-pink" id="btn-order2" href="https://www.402key.com/shop/XX545CGP" target="_blank" rel="noopener"> 
+        <div id="v18" class="btn-ico">
+          🛒 
+        </div> 
+        <div id="v19" class="btn-text"> 
+         <div id="v20" class="btn-title">
+           下 单 2 
+         </div> 
+         <div id="v21" class="btn-sub">
+           官方店铺 
+         </div> 
+        </div> </a> 
+      </div> 
+     </div> 
+     <div id="v22" class="section"> 
+      <div id="v23" class="section-title cyan"> 
+       <span id="v24">📥</span> 下载与赞赏 
+      </div> 
+      <div id="v25" class="button-grid grid-3"> 
+       <a class="btn-float btn-cyan" id="btn-download" href="https://share.feijipan.com/s/M9xdJGu6" target="_blank" rel="noopener"> 
+        <div id="v26" class="btn-ico">
+          📥 
+        </div> 
+        <div id="v27" class="btn-text"> 
+         <div id="v28" class="btn-title">
+           下载安装包 
+         </div> 
+         <div id="v29" class="btn-sub">
+           飞盘链接 
+         </div> 
+        </div> </a> 
+       <a class="btn-float btn-cyan" id="btn-unbind" href="https://i.imgs.ovh/2026/10/22/31901dd277d49107064293c70baa9391.png" target="_blank" rel="noopener"> 
+        <div id="v30" class="btn-ico">
+          🔓 
+        </div> 
+        <div id="v31" class="btn-text"> 
+         <div id="v32" class="btn-title">
+           自愿赞赏 
+         </div> 
+         <div id="v33" class="btn-sub">
+           图片链接 
+         </div> 
+        </div> </a> 
+       <a class="btn-float btn-cyan" id="btn-platform" href="https://qm.qq.com/q/cn42yRNDFe" target="_blank" rel="noopener"> 
+        <div id="v34" class="btn-ico">
+          🏬 
+        </div> 
+        <div id="v35" class="btn-text"> 
+         <div id="v36" class="btn-title">
+           官方客服 
+         </div> 
+         <div id="v37" class="btn-sub">
+           QQ咨询 
+         </div> 
+        </div> </a> 
+      </div> 
+     </div> 
+     <div id="v38" class="section"> 
+      <div id="v39" class="section-title gold"> 
+       <span id="v40">👥</span> 社群入口 
+      </div> 
+      <div id="v41" class="button-grid grid-2"> 
+       <a class="btn-float btn-gold" id="btn-tg" href="https://t.me/YYNB969" target="_blank" rel="noopener"> 
+        <div id="v42" class="btn-ico">
+          ✈️ 
+        </div> 
+        <div id="v43" class="btn-text"> 
+         <div id="v44" class="btn-title">
+           TG 频道 
+         </div> 
+         <div id="v45" class="btn-sub">
+           @YYNB969 
+         </div> 
+        </div> </a> 
+       <a class="btn-float btn-gold" id="btn-qq" href="https://qm.qq.com/q/E83xNPgJfq" target="_blank" rel="noopener"> 
+        <div id="v46" class="btn-ico">
+          💬 
+        </div> 
+        <div id="v47" class="btn-text"> 
+         <div id="v48" class="btn-title">
+           交 流 群 
+         </div> 
+         <div id="v49" class="btn-sub">
+           QQ 群聊 
+         </div> 
+        </div> </a> 
+      </div> 
+     </div> 
+     <div id="v50" class="divider"></div> 
+     <div id="v51" class="footer"> 
+      <a id="v52" class="line" href="https://qm.qq.com/q/b9dCObeo0w" target="_blank" rel="noopener"> 同款网站制作联系 <span id="v53" class="hl-gold">点击加我为QQ好友</span> </a> 
+      <span id="v54" class="line"> 本网站由 <span id="v55" class="hl">夜影发卡</span> 提供技术支持 </span> 
+     </div> 
+    </div> 
+   </div> 
+  </main> 
+  <div class="toast" id="toast"></div> 
+  <script>
+(function(){
+  var DEFS = {
+    order1_url:   "https://ys.42bb.cn/shop/YYNB",
+    order2_url:   "https://www.402key.com/shop/XX545CGP",
+    download_url: "https://share.feijipan.com/s/M9xdJGu6",
+    unbind_url:  "https://i.imgs.ovh/2026/10/22/31901dd277d49107064293c70baa9391.png",
+    platform_url:"https://qm.qq.com/q/cn42yRNDFe",
+    tg_url:      "https://t.me/YYNB969",
+    qq_url:      "https://qm.qq.com/q/E83xNPgJfq"
+  };
+  var CFG = Object.assign({}, DEFS);
+  var MAP = [
+    ['order1',   'order1_url'],
+    ['order2',   'order2_url'],
+    ['download', 'download_url'],
+    ['unbind',   'unbind_url'],
+    ['platform', 'platform_url'],
+    ['tg',       'tg_url'],
+    ['qq',       'qq_url']
+  ];
+
+  function toast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+  }
+
+  function applyCfg(){
+    MAP.forEach(function(p){
+      var id=p[0], key=p[1];
+      var a = document.getElementById('btn-'+id);
+      if(a && CFG[key]) a.href = CFG[key];
+    });
+  }
+
+  function loadCfg(cb){
+    fetch('api.php?action=getConfig', {cache:'no-store'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.status && d.data){
+          CFG = Object.assign({}, DEFS, d.data);
+          cb(true);
+        } else cb(false);
+      }).catch(function(){ cb(false); });
+  }
+
+  document.querySelectorAll('.btn-float').forEach(function(b){
+    b.addEventListener('click', function(e){
+      var rect = b.getBoundingClientRect();
+      var x = (e.clientX||(rect.left+rect.width/2)) - rect.left;
+      var y = (e.clientY||(rect.top+rect.height/2)) - rect.top;
+      b.style.setProperty('--x', x+'px');
+      b.style.setProperty('--y', y+'px');
+      var el = document.createElement('style');
+      el.innerHTML = '.btn-float::before{width:420px;height:420px}';
+      document.head.appendChild(el);
+      setTimeout(function(){ document.head.removeChild(el); }, 560);
+    });
+  });
+
+  (function particle(){
+    var canvas = document.getElementById('dot-canvas');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W, H, parts = [];
+    function resize(){
+      W = canvas.width = innerWidth * devicePixelRatio;
+      H = canvas.height = innerHeight * devicePixelRatio;
+      canvas.style.width = innerWidth+'px';
+      canvas.style.height = innerHeight+'px';
+    }
+    resize(); addEventListener('resize', resize);
+    var palette = [
+      'rgba(255,211,77,','rgba(244,114,182,','rgba(139,92,246,','rgba(34,211,238,'
+    ];
+    for(var i=0;i<60;i++){
+      parts.push({
+        x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-.5)*.32, vy:(Math.random()-.5)*.32,
+        r:Math.random()*1.8+.5,
+        c:palette[i%palette.length]
+      });
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<parts.length;i++){
+        var p=parts[i]; p.x+=p.vx; p.y+=p.vy;
+        if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*devicePixelRatio,0,Math.PI*2);
+        ctx.fillStyle=p.c+'0.8)'; ctx.fill();
+        for(var j=i+1;j<parts.length;j++){
+          var q=parts[j],dx=p.x-q.x,dy=p.y-q.y,d=dx*dx+dy*dy,md=150*150*devicePixelRatio*devicePixelRatio;
+          if(d<md){
+            ctx.strokeStyle=p.c+(1-d/md)*.18+')';
+            ctx.lineWidth=devicePixelRatio; ctx.beginPath();
+            ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+
+  loadCfg(function(ok){
+    if(!ok){
+      try{
+        var s = JSON.parse(localStorage.getItem('wyy_config')||'null');
+        if(s) CFG = Object.assign({}, DEFS, s);
+      }catch(e){}
+    }
+    applyCfg();
+  });
+})();
+</script>  
+ </body>
+</html>
